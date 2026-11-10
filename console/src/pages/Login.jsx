@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api, useTitle } from "../api.js";
+import Logo from "../components/Logo.jsx";
 
 const CHECK = (
   <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
@@ -41,7 +42,8 @@ export default function Login() {
     <div className="auth">
       <section className="hero">
         <div className="logo">
-          <i>IU</i>IU CLUB <span style={{ color: "rgba(255,255,255,.75)" }}>Console</span>
+          <Logo />
+          IU CLUB <span style={{ color: "rgba(255,255,255,.75)" }}>Console</span>
         </div>
         <div>
           <h1>Mọi dự án của câu lạc bộ, một nơi.</h1>
