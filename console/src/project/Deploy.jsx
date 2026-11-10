@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { MeContext, api, useAction } from "../api.js";
 import { fmtTime } from "../../shared.js";
 import Message from "../components/Message.jsx";
@@ -6,10 +6,63 @@ import { Step, Steps } from "../components/Steps.jsx";
 import CodeBox from "../components/CodeBox.jsx";
 
 const STATE = {
-  running: ["soon", "Đang triển khai"],
-  ok: ["on", "Thành công"],
-  fail: ["", "Lỗi"],
+  running: ["tone-run", "Đang triển khai"],
+  ok: ["tone-ok", "Thành công"],
+  fail: ["tone-fail", "Lỗi"],
 };
+const STEP_TEXT = { wait: "Chờ", run: "Đang chạy", ok: "Xong", fail: "Lỗi" };
+
+/** 75000 → "1 phút 15 giây" */
+const fmtDur = (ms) => {
+  const s = Math.max(0, Math.round(ms / 1000));
+  return s < 60 ? `${s} giây` : `${Math.floor(s / 60)} phút${s % 60 ? ` ${s % 60} giây` : ""}`;
+};
+const stepText = (s) => {
+  if (!s.startedAt || s.state === "wait") return STEP_TEXT.wait;
+  return `${STEP_TEXT[s.state] || s.state} · ${fmtDur((s.endedAt || Date.now()) - s.startedAt)}`;
+};
+
+// Log build: tô màu dòng lệnh, dòng commit và dòng lỗi; đang chạy thì tự cuộn xuống cuối
+function Log({ text, running, failed }) {
+  const ref = useRef(null);
+  const atEnd = useRef(true);
+  useEffect(() => {
+    const el = ref.current;
+    if (el && running && atEnd.current) el.scrollTop = el.scrollHeight;
+  }, [text, running]);
+  const lines = text.replace(/\n+$/, "").split("\n");
+  const last = lines.length - 1;
+  return (
+    <pre
+      ref={ref}
+      className="term"
+      aria-live={running ? "polite" : undefined}
+      onScroll={(e) => {
+        const el = e.currentTarget;
+        atEnd.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+      }}
+    >
+      {lines.map((l, i) => (
+        <span
+          key={i}
+          className={
+            l.startsWith("$ ")
+              ? "cmd"
+              : l.startsWith("Commit ")
+                ? "commit"
+                : (failed && i === last) || /\b(error|failed|denied)\b|lỗi|không /i.test(l)
+                  ? "bad"
+                  : undefined
+          }
+        >
+          {l}
+          {"\n"}
+        </span>
+      ))}
+      {running && <span className="cursor" aria-hidden="true"></span>}
+    </pre>
+  );
+}
 const SUB = { gridColumn: "1/-1", marginTop: 12 };
 
 export default function Deploy({ data, reload }) {
@@ -17,7 +70,8 @@ export default function Deploy({ data, reload }) {
   const { project: p } = data;
   const d = p.deploy,
     o = p.owner; // chỉ chủ dự án có
-  const [cls, label] = STATE[d?.state] || ["", "Chưa triển khai"];
+  const [tone, label] = STATE[d?.state] || ["tone-wait", "Chưa triển khai"];
+  const total = d?.startedAt && d.state !== "running" ? d.at - d.startedAt : null;
   const { msg, busy, run } = useAction();
   const [ref, setRef] = useState("");
   const [cfg, setCfg] = useState(() => ({
@@ -52,72 +106,58 @@ export default function Deploy({ data, reload }) {
   const mono = (t) => <span className="mono">{t}</span>;
   const branch = o?.branch || "main";
   return (
-    <div className="cols">
-      <section className="card">
-        <div className="head">
-          <h2>Lần triển khai gần nhất</h2>
-          <span className="sp"></span>
-          <span className={`pill ${cls}`}>{label}</span>
-        </div>
-        {d ? (
-          <>
-            <ol className="rows">
-              <li>
-                <span className="t">Commit</span>
-                <span className="n">{(d.commit || d.ref || "—").slice(0, 7)}</span>
-                {d.subject && <span className="d">{d.subject}</span>}
-              </li>
-              <li>
-                <span className="t">Lúc</span>
-                <span className="n">{fmtTime(d.at)}</span>
-                <span className="d">bởi {d.by}</span>
-              </li>
-            </ol>
-            {d.log && (
-              <details style={{ marginTop: 20 }} open={d.state === "fail" || undefined}>
-                <summary>Nhật ký build</summary>
-                <pre className="code" style={{ maxHeight: 420, overflow: "auto", marginTop: 12 }}>
-                  <code>{d.log}</code>
-                </pre>
-              </details>
+    <div className="stack">
+      <section className="card run">
+        <div className="run-head">
+          <div className="what">
+            <span className={`run-state ${tone}`}>
+              <i aria-hidden="true"></i>
+              {label}
+            </span>
+            {d ? (
+              <span className="run-meta">
+                {(d.commit || d.ref) && (
+                  <span className="mono">{(d.commit || d.ref).slice(0, 7)}</span>
+                )}
+                {d.subject && <> {d.subject}</>}
+                <br />
+                {d.state === "running" ? "Bắt đầu" : "Xong"} {fmtTime(d.at)}, bởi {d.by}
+                {total != null && <>, {fmtDur(total)}</>}
+              </span>
+            ) : (
+              <span className="run-meta">Chưa có lần triển khai nào.</span>
             )}
-            {d.state === "running" && (
-              <p className="muted" style={{ margin: "16px 0 0" }}>
-                Trang tự tải lại khi có kết quả.
-              </p>
-            )}
-          </>
-        ) : (
-          <p className="empty">Chưa có lần triển khai nào.</p>
-        )}
-        {p.can.owner && o.repo && o.pubkey && (
-          <form className="f" style={{ marginTop: 28 }} onSubmit={send({ do: "run", ref })}>
-            <label>
-              Commit{" "}
-              <small>
-                để trống = mới nhất trên nhánh {branch}; điền mã commit cũ để quay lại bản trước
-              </small>
+          </div>
+          {p.can.owner && o.repo && o.pubkey && (
+            <form className="run-actions" onSubmit={send({ do: "run", ref })}>
               <input
                 className="mono"
                 name="ref"
-                placeholder="vd. 1a2b3c4"
+                aria-label={`Commit cũ để quay lại (để trống = mới nhất trên nhánh ${branch})`}
+                title={`Để trống = mới nhất trên nhánh ${branch}; điền mã commit cũ để quay lại bản trước`}
+                placeholder="commit cũ"
                 autoComplete="off"
                 value={ref}
                 onChange={(e) => setRef(e.target.value)}
               />
-            </label>
-            <div>
               <button className="btn pri" disabled={busy || d?.state === "running"}>
-                Triển khai ngay
+                {d?.state === "running" ? "Đang triển khai…" : "Triển khai ngay"}
               </button>
-            </div>
-          </form>
+            </form>
+          )}
+        </div>
+        {d?.steps?.length > 0 && (
+          <ol className="pipe" aria-label="Các bước triển khai">
+            {d.steps.map((s) => (
+              <li key={s.key} data-state={s.state}>
+                <b>{s.title}</b>
+                <span>{stepText(s)}</span>
+              </li>
+            ))}
+          </ol>
         )}
-        {msg.err && (
-          <div style={{ marginTop: 16 }}>
-            <Message err={msg.err} />
-          </div>
-        )}
+        {d?.log && <Log text={d.log} running={d.state === "running"} failed={d.state === "fail"} />}
+        {msg.err && <Message err={msg.err} />}
       </section>
       {p.can.owner && (
         <section className="card">
@@ -141,7 +181,7 @@ export default function Deploy({ data, reload }) {
                 <div className="two">
                   <label>
                     Repo
-                    <input className="mono" placeholder={`iu-club/${p.slug}`} {...bind("repo")} />
+                    <input className="mono" placeholder={`IUCLUB/${p.slug}`} {...bind("repo")} />
                   </label>
                   <label>
                     Nhánh

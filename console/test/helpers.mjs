@@ -31,7 +31,7 @@ export const baseProject = {
   token: "tok",
 };
 
-export async function start({ projects = [baseProject], users = [], log = [] } = {}) {
+export async function start({ projects = [baseProject], users = [], log = [], env = {} } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "iu-console-"));
   const dataFile = path.join(dir, "data", "console.json");
   const seedFile = path.join(dir, "seed.json");
@@ -50,6 +50,7 @@ export async function start({ projects = [baseProject], users = [], log = [] } =
       BACKUP_DIR: path.join(dir, "backups"),
       SEED_FILE: seedFile,
       DEPLOYER_URL: "http://127.0.0.1:1",
+      ...env,
       CONSOLE_USERS: "root@x.co:password123",
     },
     stdio: ["ignore", "pipe", "pipe"],

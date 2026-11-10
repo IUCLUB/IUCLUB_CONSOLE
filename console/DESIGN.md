@@ -202,12 +202,31 @@ Monochrome #ffffff or #000000, 4px border-radius on the container, appears at 16
 ### Don't
 
 - Do not use box-shadow for elevation — the system relies on translucency, hairline borders, and surface contrast instead
-- Do not introduce additional brand colors — the 2% colorfulness is intentional; any new hue breaks the monochromatic discipline
+- Do not introduce additional brand colors — the 2% colorfulness is intentional; any new hue breaks the monochromatic discipline. Status colors (below) are not brand colors: they only mark state.
 - Do not use border-radius below 4px or above 42px on cards — the 24px/40px/42px card radii are the system's sweet spot
 - Do not set hero headlines to weight 700 or above — the weight-500 restraint is the signature, not a suggestion
 - Do not use Geist for body text below 24px — DM Sans handles 13–18px UI text, Geist begins at the subheading level
 - Do not place the floating nav bar flush against the viewport edge — it should always float with visible margin (16–24px from edges)
 - Do not use solid #6b62f2 as a button fill or text color — the violet only appears as a gradient wash or radial glow
+
+## Màu trạng thái (IU CLUB Console)
+
+Console là công cụ vận hành nên trạng thái phải nhận ra ngay, không thể đơn sắc hoàn toàn. Bốn màu dưới đây
+chỉ dùng để báo trạng thái (chấm, viền trên của ô bước, chữ trạng thái, dòng log), không dùng cho nút hay nền lớn.
+Đang chạy và chờ lấy từ hai đầu dải gradient chân trời, nên vẫn cùng một họ màu với hero.
+
+| Trạng thái | Token    | Giá trị   | Dùng ở                                              |
+| ---------- | -------- | --------- | --------------------------------------------------- |
+| Thành công | `--ok`   | `#7ee2a8` | Chấm "Hoạt động", bước xong, "Thành công"           |
+| Lỗi        | `--bad`  | `#ff9b8f` | Sự cố, bước lỗi, dòng lỗi trong log                 |
+| Đang chạy  | `--run`  | `#e8935a` | Bước đang chạy (chấm nhấp nháy), con trỏ log        |
+| Chờ        | `--wait` | `#8b8ff0` | Bước chưa tới, chưa triển khai, dòng lệnh trong log |
+
+## Thanh điều hướng
+
+Logo + "IU CLUB", rồi vạch dọc 1px (`--hair-strong`) ngăn với các tab: thương hiệu không bao giờ trông như một tab.
+Logo nằm ở `console/public/logo.svg` (thay file là đổi logo, giữ hình vuông). Góc phải: viên thuốc tài khoản
+(chữ viết tắt trong vòng tròn Graphite + tên, viền hairline) và nút ghost "Đăng xuất".
 
 ## Surfaces
 

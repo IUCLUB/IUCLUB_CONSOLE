@@ -141,7 +141,7 @@ export default function Guide() {
             <summary>Chưa có repo template trên GitHub? (làm một lần)</summary>
             <ol className="rows" style={{ marginTop: 16 }}>
               <Row n={1} t="Tạo repo mới, private">
-                Ví dụ <M>iu-club-starter</M>. Tải lên toàn bộ nội dung thư mục{" "}
+                Ví dụ <M>iuclub-starter</M>. Tải lên toàn bộ nội dung thư mục{" "}
                 <M>templates/starter/</M>.
               </Row>
               <Row n={2} t="Bật Template repository">

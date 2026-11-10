@@ -57,20 +57,34 @@ export const projectCard = (p, me, live) => ({
   uptime: uptime(mon.get(p.slug)),
 });
 
-const deployView = (d) =>
+// Các bước triển khai: chỉ lấy các trường đã biết từ deployer
+const stepsView = (steps) =>
+  Array.isArray(steps)
+    ? steps.map((s) => ({
+        key: String(s.key),
+        title: String(s.title),
+        state: String(s.state),
+        startedAt: s.startedAt ?? null,
+        endedAt: s.endedAt ?? null,
+      }))
+    : [];
+// live: tiến độ lấy từ deployer khi đang chạy (bước + log tới lúc này)
+const deployView = (d, live) =>
   d
     ? {
         state: d.state,
         at: d.at,
+        startedAt: d.startedAt ?? null,
         by: d.by,
         commit: d.commit,
         subject: d.subject,
         ref: d.ref,
-        log: d.log,
+        steps: stepsView(live?.steps ?? d.steps),
+        log: live?.log ?? d.log,
       }
     : null;
 
-export function projectDetail(p, me) {
+export function projectDetail(p, me, live = null) {
   const site = projectUrl(p.slug);
   const v = {
     slug: p.slug,
@@ -96,7 +110,7 @@ export function projectDetail(p, me) {
       super: can(me, p.slug, "super"),
     },
     hasToken: !!p.token,
-    deploy: deployView(p.deploy),
+    deploy: deployView(p.deploy, live),
   };
   // Chỉ chủ dự án thấy cấu hình triển khai; chạy localhost thì không có webhook.
   if (v.can.owner) {

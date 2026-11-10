@@ -88,7 +88,7 @@ export default function Project() {
   const [running, setRunning] = useState(false);
   const want = q.get("tab");
   const { data, error, reload } = useApi(`/api/projects/${slug}`, {
-    poll: running && want === "deploy" ? 5000 : undefined,
+    poll: running && want === "deploy" ? 1500 : undefined, // log build gần như trực tiếp
   });
   const isRunning = data?.project.deploy?.state === "running";
   if (isRunning !== running) setRunning(isRunning);

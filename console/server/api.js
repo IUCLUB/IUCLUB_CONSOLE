@@ -4,6 +4,7 @@ import { db, find, visible, visibleLog } from "./store.js";
 import { mon, probe } from "./monitor.js";
 import { json, readJson } from "./http.js";
 import * as act from "./actions.js";
+import { deployStatus } from "./deploy.js";
 import { userView, projectCard, projectDetail, logView, checksOf, TABS } from "./views.js";
 
 const NOT_FOUND = "Không có dự án này, hoặc bạn chưa được thêm vào.";
@@ -28,9 +29,13 @@ async function home(me) {
 
 async function detail(p, me) {
   const need = (r) => can(me, p.slug, r);
-  const live = await probe(p);
+  // Đang triển khai: lấy tiến độ trực tiếp từ deployer cùng lúc với kiểm tra sống
+  const [live, progress] = await Promise.all([
+    probe(p),
+    p.deploy?.state === "running" ? deployStatus(p.slug) : null,
+  ]);
   const out = {
-    project: projectDetail(p, me),
+    project: projectDetail(p, me, progress),
     tabs: TABS.filter(([, , r]) => need(r)).map(([k, l]) => [k, l]),
     live: {
       up: live.up,

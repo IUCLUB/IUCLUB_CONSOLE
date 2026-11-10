@@ -2,6 +2,8 @@ import { useContext } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { MeContext, api } from "../api.js";
 import SlideNav from "./SlideNav.jsx";
+import Logo from "./Logo.jsx";
+import { initials } from "./Mark.jsx";
 
 const NAV = [
   ["/", "Dự án"],
@@ -28,19 +30,25 @@ export default function Layout() {
         Bỏ qua điều hướng
       </a>
       <header className="nav">
-        <Link className="logo" to="/">
-          <i>IU</i>IU CLUB <span>Console</span>
+        {/* Thương hiệu tách khỏi các tab bằng vạch dọc, để không bị nhầm là một tab */}
+        <Link className="logo" to="/" title="IU CLUB Console">
+          <Logo />
+          IU CLUB
         </Link>
+        <span className="nav-sep" aria-hidden="true"></span>
         <SlideNav name="nav" label="Phân hệ" items={items} current={current} />
         <div className="who">
+          {/* Tài khoản: viên thuốc có chữ viết tắt + tên, giống nút ghost trong DESIGN.md */}
           <Link
+            className="me"
             to="/account"
             aria-current={path === "/account" ? "page" : undefined}
-            title="Tài khoản"
+            title={`Tài khoản: ${user.email}`}
           >
-            {user.name || user.email}
+            <i aria-hidden="true">{initials(user.name || user.email)}</i>
+            <span>{user.name || user.email}</span>
           </Link>
-          <button type="button" className="btn link" onClick={logout}>
+          <button type="button" className="btn sm" onClick={logout}>
             Đăng xuất
           </button>
         </div>
