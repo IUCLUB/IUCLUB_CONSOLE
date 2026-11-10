@@ -1,0 +1,73 @@
+# Lõi IU CLUB: gateway (Caddy) + Console + deployer. Mỗi dự án là một repo riêng, deployer chạy compose
+# của dự án đó và nối nó vào mạng "iuclub" do file này tạo ra.
+services:
+  gateway:
+    image: caddy:2.8.4-alpine
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-8088}:80"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+      GATE_SECRET: ${GATE_SECRET:?thiếu GATE_SECRET trong .env}
+    volumes:
+      - ./gateway/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on:
+      - console
+
+  console:
+    build: ./console
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DEPLOYER_URL: http://deployer:4000
+    networks: [default, deploy]
+    volumes:
+      - console-data:/data
+      - backups:/backups
+
+  # Kéo repo dự án từ GitHub và chạy compose. Service duy nhất giữ docker.sock (tương đương root trên host),
+  # nên chỉ nằm trong mạng "deploy" riêng với Console: gateway và container dự án không gọi tới được.
+  deployer:
+    build: ./deployer
+    restart: unless-stopped
+    environment:
+      SECRET: ${SECRET}
+    networks: [deploy]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - deploy-src:/src
+      - deploy-keys:/keys
+
+  # Đẩy thư mục sao lưu của Console lên Google Drive mỗi giờ. Chỉ chạy trên server: COMPOSE_PROFILES=backup trong .env.
+  # Cấu hình Drive một lần: docker compose run --rm -it --entrypoint rclone backup config  (đặt tên remote là "drive")
+  backup:
+    image: rclone/rclone:1.68.2
+    profiles: [backup]
+    restart: unless-stopped
+    network_mode: bridge
+    entrypoint:
+      [
+        "sh",
+        "-c",
+        "while true; do rclone sync /backups drive:${BACKUP_REMOTE_DIR:-iu-club-backups} -v; sleep 3600; done",
+      ]
+    volumes:
+      - backups:/backups:ro
+      - rclone-config:/config/rclone
+
+networks:
+  default:
+    name: iuclub
+  deploy:
+    name: iuclub-deploy
+
+volumes:
+  caddy-data:
+  console-data:
+  # Tên cố định: deployer mount từng thư mục con của volume này vào sandbox compose
+  deploy-src:
+    name: iuclub-deploy-src
+  deploy-keys:
+  backups:
+  rclone-config:

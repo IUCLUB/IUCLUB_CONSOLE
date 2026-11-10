@@ -1,0 +1,33 @@
+name: CI · console
+
+on:
+  push:
+    branches: ["**"]
+    paths: ["console/**", "templates/**"]
+  pull_request:
+    paths: ["console/**", "templates/**"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: console
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci && npm run build && npm test
+
+  template:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: templates/starter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci && npm run build

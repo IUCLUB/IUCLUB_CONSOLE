@@ -1,0 +1,35 @@
+# Gateway IU CLUB: admin.<DOMAIN> = Console, <slug>.<DOMAIN> = dự án.
+# Mỗi request vào dự án được Console (/gate) quyết định: dự án có tồn tại không, đang bật không,
+# đường dẫn có cần đăng nhập không, và chuyển tới container nào (header X-Iu-Upstream).
+# Chạy thật với HTTPS: xem README, mục "Lên server thật".
+{
+	auto_https off
+	admin off
+}
+
+http://admin.{$DOMAIN} {
+	reverse_proxy console:3000
+}
+
+http://*.{$DOMAIN} {
+	handle /__iu/* {
+		reverse_proxy console:3000
+	}
+	handle {
+		route {
+			# Không tin header danh tính do trình duyệt tự gửi
+			request_header -X-Iu-User
+			request_header -X-Iu-Upstream
+			request_header -X-Iu-Key
+			request_header -X-Iu-Role
+			request_header -X-Iu-Gate
+			forward_auth console:3000 {
+				uri /gate
+				# Chứng minh với Console đây là gateway, không phải container dự án gọi thẳng /gate
+				header_up X-Iu-Gate {$GATE_SECRET}
+				copy_headers X-Iu-User X-Iu-Upstream X-Iu-Key X-Iu-Role
+			}
+			reverse_proxy {http.request.header.X-Iu-Upstream}
+		}
+	}
+}

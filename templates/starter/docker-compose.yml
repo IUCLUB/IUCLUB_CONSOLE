@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    container_name: p-${IU_SLUG:?thiếu IU_SLUG trong .env}
+    restart: unless-stopped
+    env_file: .env
+    # Không mở cổng ra host: chỉ vào qua gateway IU CLUB (<slug>.<domain>)
+    networks: [default, iuclub]
+    # Dữ liệu SQLite, giữ lại qua các lần build. Deployer đặt tên volume là <slug>_data
+    volumes:
+      - data:/data
+    # Giới hạn tài nguyên để một dự án không làm chậm cả server
+    mem_limit: 512m
+    cpus: 1.0
+
+volumes:
+  data:
+
+networks:
+  iuclub:
+    external: true
