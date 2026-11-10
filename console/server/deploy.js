@@ -13,6 +13,15 @@ export const callDeployer = (pathname, payload = {}) =>
     body: JSON.stringify(payload),
     signal: AbortSignal.timeout(20 * 60e3),
   }).then((r) => r.json());
+// Tiến độ đang chạy (bước + log) để tab Triển khai xem trực tiếp. Lỗi thì trả null, trang vẫn hiện.
+export const deployStatus = (slug) =>
+  fetch(`${DEPLOYER_URL}/status/${slug}`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${DEPLOY_AUTH}` },
+    signal: AbortSignal.timeout(2000),
+  })
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
 export const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/,
   BRANCH = /^(?!-)(?!.*\.\.)[A-Za-z0-9._/-]{1,100}$/,
   SHA = /^[0-9a-f]{7,40}$/;
@@ -48,7 +57,10 @@ export function startDeploy(p, who, ref = "") {
     .then((r) => {
       const q = find(p.slug);
       if (!q) return;
+      const startedAt = q.deploy?.at;
       q.deploy = {
+        startedAt,
+        steps: Array.isArray(r.steps) ? r.steps : [],
         state: r.ok ? "ok" : "fail",
         at: Date.now(),
         by: who,
