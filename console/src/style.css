@@ -12,6 +12,9 @@
   --subtle: rgba(255, 255, 255, 0.1) 0 0 0 1px inset;
   --ok: #7ee2a8;
   --bad: #ff9b8f;
+  /* Màu trạng thái, lấy từ hai đầu dải gradient chân trời: đang chạy (amber), chờ (cobalt) */
+  --run: #e8935a;
+  --wait: #8b8ff0;
   --dm: "DM Sans", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --geist: "Geist", Inter, ui-sans-serif, system-ui, sans-serif;
   --mono: "Geist Mono", ui-monospace, Consolas, monospace;
@@ -77,16 +80,17 @@ a {
   text-decoration: none;
   white-space: nowrap;
 }
-.logo i {
-  width: 24px;
-  height: 24px;
+.logo-mark {
+  display: block;
+  flex: none;
   border-radius: 4px;
-  background: #fff;
-  color: #000;
-  display: grid;
-  place-items: center;
-  font: 600 11px var(--geist);
-  font-style: normal;
+}
+/* Vạch dọc giữa thương hiệu và các tab */
+.nav-sep {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  background: var(--hair-strong);
 }
 .logo span {
   color: var(--slate);
@@ -120,23 +124,51 @@ a {
 .who {
   margin-left: auto;
   display: flex;
-  gap: 4px;
+  gap: 8px;
   align-items: center;
   min-width: 0;
-  color: var(--slate);
   font-size: 13px;
 }
-.who a {
+/* Viên thuốc tài khoản: chữ viết tắt + tên, viền mảnh như nút ghost */
+.me {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 220px;
+  padding: 3px 12px 3px 3px;
+  border-radius: 9999px;
+  border: 1px solid var(--hair);
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+.me:hover,
+.me[aria-current] {
+  border-color: var(--hair-strong);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+.me i {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--graphite);
+  box-shadow: var(--subtle);
+  font: 600 10px var(--geist);
+  font-style: normal;
+  letter-spacing: 0.02em;
+  color: var(--bone);
+}
+.me span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 220px;
-  padding: 6px 10px;
-  border-radius: 9999px;
-}
-.who a:hover {
-  color: #fff;
 }
 main {
   width: min(1200px, calc(100% - 32px));
@@ -1050,7 +1082,11 @@ details > .f {
   .two {
     grid-template-columns: 1fr;
   }
-  .who a {
+  /* Màn hẹp: chỉ còn chữ viết tắt */
+  .me {
+    padding: 3px;
+  }
+  .me span {
     display: none;
   }
   .nav {
@@ -1058,7 +1094,8 @@ details > .f {
     gap: 4px 8px;
     padding: 8px;
   }
-  .logo span {
+  .logo span,
+  .nav-sep {
     display: none;
   }
   .links {
@@ -1093,5 +1130,166 @@ details > .f {
   }
   .sec {
     margin-top: 48px;
+  }
+}
+
+/* Tab Triển khai: thanh trạng thái, các bước, log trực tiếp */
+.run {
+  display: grid;
+  gap: 24px;
+}
+.run-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+}
+.run-head .what {
+  flex: 1;
+  min-width: 240px;
+  display: grid;
+  gap: 6px;
+}
+.run-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 22px/1.2 var(--geist);
+  letter-spacing: -0.01em;
+  color: var(--tone, var(--bone));
+}
+.run-state i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--tone, var(--slate));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--tone, var(--slate)) 18%, transparent);
+}
+.tone-run {
+  --tone: var(--run);
+}
+.tone-ok {
+  --tone: var(--ok);
+}
+.tone-fail {
+  --tone: var(--bad);
+}
+.tone-wait {
+  --tone: var(--wait);
+}
+.run-state.tone-run i {
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--run) 8%, transparent);
+  }
+}
+.run-meta {
+  color: var(--ash);
+  font-size: 14px;
+}
+.run-meta .mono {
+  color: var(--bone);
+}
+.run-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.run-actions input {
+  width: 130px;
+  min-height: 36px;
+}
+.pipe {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.pipe li {
+  --tone: var(--slate);
+  position: relative;
+  padding: 14px 16px 12px;
+  border-radius: 10px;
+  background: rgba(10, 10, 10, 0.5);
+  box-shadow: var(--subtle);
+  border-top: 2px solid color-mix(in srgb, var(--tone) 70%, transparent);
+  display: grid;
+  gap: 2px;
+}
+.pipe li[data-state="run"] {
+  --tone: var(--run);
+  background: color-mix(in srgb, var(--run) 9%, rgba(10, 10, 10, 0.5));
+}
+.pipe li[data-state="ok"] {
+  --tone: var(--ok);
+}
+.pipe li[data-state="fail"] {
+  --tone: var(--bad);
+  background: color-mix(in srgb, var(--bad) 9%, rgba(10, 10, 10, 0.5));
+}
+.pipe li[data-state="wait"] {
+  --tone: rgba(139, 143, 240, 0.45);
+}
+.pipe b {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--bone);
+}
+.pipe span {
+  font-size: 12px;
+  color: var(--tone);
+}
+.pipe li[data-state="wait"] span {
+  color: var(--slate);
+}
+.term {
+  margin: 0;
+  max-height: 440px;
+  overflow: auto;
+  padding: 16px 18px;
+  border-radius: 10px;
+  background: #050505;
+  box-shadow: var(--subtle);
+  font: 400 12.5px/1.6 var(--mono);
+  color: var(--ash);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.term .cmd {
+  color: var(--wait);
+}
+.term .commit {
+  color: var(--bone);
+}
+.term .bad {
+  color: var(--bad);
+}
+.term .cursor {
+  display: inline-block;
+  width: 7px;
+  height: 14px;
+  vertical-align: -2px;
+  background: var(--run);
+  animation: blink 1s steps(2) infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+@media (max-width: 760px) {
+  .pipe {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .run-state.tone-run i,
+  .term .cursor {
+    animation: none;
   }
 }
