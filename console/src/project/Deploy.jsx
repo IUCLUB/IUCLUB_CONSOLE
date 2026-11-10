@@ -141,7 +141,7 @@ export default function Deploy({ data, reload }) {
                 <div className="two">
                   <label>
                     Repo
-                    <input className="mono" placeholder={`iu-club/${p.slug}`} {...bind("repo")} />
+                    <input className="mono" placeholder={`IUCLUB/${p.slug}`} {...bind("repo")} />
                   </label>
                   <label>
                     Nhánh

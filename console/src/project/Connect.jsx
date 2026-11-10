@@ -5,7 +5,7 @@ import CodeBox from "../components/CodeBox.jsx";
 // Chỉ chủ dự án thấy tab này nên luôn có p.owner
 export default function Connect({ data }) {
   const { project: p, live } = data;
-  const repo = p.owner.repo || `iu-club/${p.slug}`;
+  const repo = p.owner.repo || `IUCLUB/${p.slug}`;
   const mono = (t) => <span className="mono">{t}</span>;
   return (
     <div className="stack">
